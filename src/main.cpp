@@ -5,8 +5,8 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-const char* ssid = "Thanh Le";
-const char* password = "010203nu";
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
 
 const char* NTP_SERVER = "time.google.com";
 const long gmtOffset_sec = 7*3600;
