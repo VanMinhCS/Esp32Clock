@@ -4,6 +4,8 @@
 #include <WiFi.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <Date.h>
+#include <LunarConverter.h>
 
 const char* ssid = "Thanh Le";
 const char* password = "010203nu";
@@ -21,9 +23,17 @@ unsigned long lastUpdate = 0;
 const unsigned long updateInterval = 30*60*1000;
 unsigned long lastLCD = 0;
 
+const int buttonPin = 0;
+
 int hours, minutes, seconds;
 int day, month, year;
 int dayOfWeek;
+
+enum type {DL, AL};
+type Type = DL;
+bool buttonPressed = false;
+unsigned long lastDebounceTime = 0;
+const unsigned long debounceDelay = 100;
 
 const char* daysOfWeek[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
@@ -66,9 +76,9 @@ void updateLocalTime() {
   }
 }
 
-void displayTime() {
+void displayTimeDL() {
   char dateStr[16];
-  sniprintf(dateStr, sizeof(dateStr), "%s %02d/%02d/%04d", daysOfWeek[dayOfWeek], day, month, year);
+  snprintf(dateStr, sizeof(dateStr), "%s %02d/%02d/%04d", daysOfWeek[dayOfWeek], day, month, year);
   lcd.setCursor(1,0);
   lcd.print(dateStr);
 
@@ -76,10 +86,39 @@ void displayTime() {
   snprintf(timeStr, sizeof(timeStr), "%02d:%02d:%02d", hours, minutes, seconds);
   lcd.setCursor(4,1);
   lcd.print(timeStr);
+  lcd.setCursor(14,1);
+  lcd.print("DL");
+}
+
+void displayTimeAL() {
+  Espace::Date date = Espace::Date(day, month, year);
+  Espace::LunarConverter converter = Espace::LunarConverter();
+  Espace::Date lunarDate = converter.Convert(date);
+  // Serial.printf("Am lich: %02d/%02d/%04d\n", lunarDate.DayInMonth, lunarDate.Month, lunarDate.Year);
+  char dateStr[16];
+  snprintf(dateStr, sizeof(dateStr), "%s %02d/%02d/%04d", daysOfWeek[dayOfWeek], lunarDate.DayInMonth, lunarDate.Month, lunarDate.Year);
+  lcd.setCursor(1,0);
+  lcd.print(dateStr);
+
+  char timeStr[16];
+  snprintf(timeStr, sizeof(timeStr), "%02d:%02d:%02d", hours, minutes, seconds);
+  lcd.setCursor(4,1);
+  lcd.print(timeStr);
+  lcd.setCursor(14,1);
+  lcd.print("AL");
+}
+
+void ICACHE_RAM_ATTR buttonISR() {
+  // Xử lý ngắt: đặt cờ khi nút được nhấn
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    buttonPressed = true;
+    lastDebounceTime = millis();
+  }
 }
 
 void setup(){
   Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
 
   Wire.begin();
   lcd.init();
@@ -98,9 +137,13 @@ void setup(){
   }
   Serial.println("\nWiFi connected");
 
+  attachInterrupt(digitalPinToInterrupt(buttonPin), buttonISR, FALLING);
+
   timeClient.begin();
   updateTimeFromNTP();
   lcd.clear();
+
+  Serial.print("Done");
 }
 
 void loop() {
@@ -111,9 +154,14 @@ void loop() {
   }
   if (currentMillis - lastLCD >= 1000){
     updateLocalTime();
-    displayTime();
     lastLCD = currentMillis;
   }
-  
+  if (Type == type::DL) displayTimeDL();
+  else if (Type == type::AL) displayTimeAL();
+  if (buttonPressed) {
+    buttonPressed = false;
+    if (Type == type::DL) Type = type::AL;
+    else Type = type::DL;
+  }
 
 }
