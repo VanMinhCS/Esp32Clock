@@ -4,5 +4,5 @@ Sau khi thiết bị hoạt động ổn định, bấm BOOT để chuyển đ�
 Dòng chữ khi xuất hiện có thể tùy chỉnh ở hàm setup() tùy sở thích ✍️(◔◡◔)  
 Thư viện chuyển đổi lịch dương sang lịch âm: [Link](https://github.com/ESPACE-HCM/DateTimeConverter)  
 Nền tảng: PlatformIO IDE.  
-Cách nối dây giữa Board ESP32 và LCD 1602 i2c: SDA - D21, SCL - D22, VCC - Vin, GND - GND.  
+Cách nối dây giữa LCD 1602 i2c và Board ESP32: SDA - D21, SCL - D22, VCC - Vin, GND - GND.  
 Tải, nạp code vào ESP32 và thưởng thức thôi UwU.  
